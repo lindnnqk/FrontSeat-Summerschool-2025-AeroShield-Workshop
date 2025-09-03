@@ -6,4 +6,4 @@ Tasks for the AeroShield project:
 
 3. Online MPC
 
-Helpful files and code Fragments are included in this repository. Have fun!
+Helpful files and code fragments are included in this repository. Have fun!
