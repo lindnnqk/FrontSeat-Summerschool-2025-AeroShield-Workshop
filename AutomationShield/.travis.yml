@@ -1,0 +1,164 @@
+language: c                                                             # Specify language, built in Arduino IDE anyways
+group: travis_latest
+
+addons:
+  apt:
+    packages:
+    - octave
+
+before_install:                                                         # Tasks to perform before installing
+                                                                        # Create virtual screen for Arduino IDE, since CLI needs it
+  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :-ac -screen 0 1280x1024x16"
+  - sleep 3                                                             # Wait for 3 seconds
+  - export DISPLAY=:1.0
+
+  - wget http://downloads.arduino.cc/arduino-1.8.9-linux64.tar.xz       # Download Arduino IDE
+  - tar xf arduino-1.8.9-linux64.tar.xz                                 # Uncompress Arduino IDE
+  - sudo mv arduino-1.8.9 /usr/local/share/arduino                      # Move Arduino ide to the correct directory
+  - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
+  # Arduino IDE adds a lot of noise caused by network traffic, trying to firewall it off
+  - sudo iptables -P INPUT DROP
+  - sudo iptables -P FORWARD DROP
+  - sudo iptables -P OUTPUT ACCEPT
+  - sudo iptables -A INPUT -i lo -j ACCEPT
+  - sudo iptables -A OUTPUT -o lo -j ACCEPT
+  - sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  - arduino --pref "boardsmanager.additional.urls=https://adafruit.github.io/arduino-board-index/package_adafruit_index.json" --save-prefs
+  - arduino --install-boards arduino:samd                               # Install board support for SAMD21 (Zero)
+  - arduino --install-boards arduino:sam                                # Install board support for SAM (Due)
+  - arduino --install-boards adafruit:samd                              # Install board support for SAMD51 (Metro M4)
+
+install:                                                                # Actual installation of the AutomationShield repo
+  - ln -s $PWD /usr/local/share/arduino/libraries/AutomationShield      # Install repository as a library
+
+# No library dependencies at this point
+before_script:
+ - octave-cli --eval "addpath('matlab');savepath"                        #Adding and saving the subdirectory to Octave path
+
+script:
+
+###### MATLAB ######
+
+#Functions#
+ - octave-cli --eval "constrain(2,-1,1)"                                # Constrain
+ - octave-cli --eval "map(0.5,0,1,0,100)"                               # Map
+
+###### Arduino IDE ######
+
+### FloatShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/FloatShield/FloatShield_Identification/FloatShield_Identification.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/FloatShield/FloatShield_PID/FloatShield_PID.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/FloatShield/FloatShield_OpenLoop/FloatShield_OpenLoop.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/FloatShield/FloatShield_LQ/FloatShield_LQ.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/FloatShield/FloatShield_MPC/FloatShield_MPC.ino
+
+#Due#
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/FloatShield/FloatShield_Identification/FloatShield_Identification.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/FloatShield/FloatShield_PID/FloatShield_PID.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/FloatShield/FloatShield_OpenLoop/FloatShield_OpenLoop.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/FloatShield/FloatShield_LQ/FloatShield_LQ.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/FloatShield/FloatShield_MPC/FloatShield_MPC.ino
+
+#Zero#
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/FloatShield/FloatShield_Identification/FloatShield_Identification.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/FloatShield/FloatShield_PID/FloatShield_PID.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/FloatShield/FloatShield_OpenLoop/FloatShield_OpenLoop.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/FloatShield/FloatShield_LQ/FloatShield_LQ.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/FloatShield/FloatShield_MPC/FloatShield_MPC.ino
+
+### HeatShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/HeatShield/HeatShield_PID/HeatShield_PID.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/HeatShield/HeatShield_Identification/HeatShield_Identification.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/HeatShield/HeatShield_Random/HeatShield_Random.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/HeatShield/HeatShield_Thermistor/HeatShield_Thermistor.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/HeatShield/HeatShield_StepResponse/_StepResponse.ino
+
+### OptoShield ###
+ #Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/OptoShield/OptoShield_PIDAuto/OptoShield_PIDAuto.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/OptoShield/OptoShield_PIDManual/OptoShield_PIDManual.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/OptoShield/OptoShield_StepResponse/OptoShield_StepResponse.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/OptoShield/OptoShield_Identification/OptoShield_Identification.ino
+
+### MagnetoShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/MagnetoShield_LQ/MagnetoShield_LQ.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/MagnetoShield_PolePlacement/MagnetoShield_PolePlacement.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/MagnetoShield_PID/MagnetoShield_PID.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/MagnetoShield_Identification/MagnetoShield_Identification.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/Support/MagnetoShield_DistanceCalibrate/MagnetoShield_DistanceCalibrate.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/Support/MagnetoShield_SelfTest/MagnetoShield_SelfTest.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MagnetoShield/Support/MagnetoShield_PowerCalibrate/MagnetoShield_PowerCalibrate.ino
+#Due#
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/MagnetoShield_MPC/MagnetoShield_MPC.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/MagnetoShield_LQ/MagnetoShield_LQ.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/MagnetoShield_PolePlacement/MagnetoShield_PolePlacement.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/MagnetoShield_PID/MagnetoShield_PID.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/MagnetoShield_Identification/MagnetoShield_Identification.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/Support/MagnetoShield_DistanceCalibrate/MagnetoShield_DistanceCalibrate.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/Support/MagnetoShield_SelfTest/MagnetoShield_SelfTest.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/MagnetoShield/Support/MagnetoShield_PowerCalibrate/MagnetoShield_PowerCalibrate.ino
+#Zero#
+#- arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/MagnetoShield_MPC/MagnetoShield_MPC.ino
+#- arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/MagnetoShield_LQ/MagnetoShield_LQ.ino
+#- arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/MagnetoShield_PolePlacement/MagnetoShield_PolePlacement.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/MagnetoShield_PID/MagnetoShield_PID.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/MagnetoShield_Identification/MagnetoShield_Identification.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/Support/MagnetoShield_DistanceCalibrate/MagnetoShield_DistanceCalibrate.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/Support/MagnetoShield_SelfTest/MagnetoShield_SelfTest.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/MagnetoShield/Support/MagnetoShield_PowerCalibrate/MagnetoShield_PowerCalibrate.ino
+
+### MotoShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MotoShield/MotoShield_PID/MotoShield_PID.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/MotoShield/MotoShield_StepResponse/MotoShield_StepResponse.ino
+
+### LinkShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/LinkShield/LinkShield_Identification/LinkShield_Identification.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/LinkShield/LinkShield_PPF/LinkShield_PPF.ino
+ 
+### TugShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/TugShield/TugShield_PID/TugShield_PID.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/TugShield/TugShield_Identification/TugShield_Identification.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/TugShield/TugShield_SelfTest/TugShield_SelfTest.ino
+#Zero#
+# - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/TugShield/TugShield_PID/TugShield_PID.ino
+# - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/TugShield/TugShield_Identification/TugShield_Identification.ino
+# - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/TugShield/TugShield_SelfTest/TugShield_SelfTest.ino
+#Due#
+# - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/TugShield/TugShield_PID/TugShield_PID.ino
+# - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/TugShield/TugShield_Identification/TugShield_Identification.ino
+# - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/TugShield/TugShield_SelfTest/TugShield_SelfTest.ino
+
+### BOBShield ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/BOBShield/BOBShield_PID/BOBShield_PID.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/BOBShield/BOBShield_Identification/BOBShield_Identification.ino
+ - arduino --verify --board arduino:avr:uno $PWD/examples/BOBShield/BOBShield_SelfTest/BOBShield_SelfTest.ino
+#Zero#
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/BOBShield/BOBShield_PID/BOBShield_PID.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/BOBShield/BOBShield_Identification/BOBShield_Identification.ino
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/BOBShield/BOBShield_SelfTest/BOBShield_SelfTest.ino
+#Due#
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/BOBShield/BOBShield_PID/BOBShield_PID.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/BOBShield/BOBShield_Identification/BOBShield_Identification.ino
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/BOBShield/BOBShield_SelfTest/BOBShield_SelfTest.ino
+
+### Sampling ###
+#Uno#
+ - arduino --verify --board arduino:avr:uno $PWD/examples/Sampling/Sampling_Test/Sampling_Test.ino
+#Zero#
+ - arduino --verify --board arduino:samd:arduino_zero_native $PWD/examples/Sampling/Sampling_Test/Sampling_Test.ino
+#Due#
+ - arduino --verify --board arduino:sam:arduino_due_x $PWD/examples/Sampling/Sampling_Test/Sampling_Test.ino
+#Metro#
+ - arduino --verify --board adafruit:samd:adafruit_metro_m4:speed=120 $PWD/examples/Sampling/Sampling_Test/Sampling_Test.ino
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
