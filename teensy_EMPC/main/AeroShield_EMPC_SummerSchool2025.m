@@ -37,7 +37,7 @@ load AeroShield_GreyboxModel_Linear      % Include linearized state-space model
 % sampling time [s]
 Ts=0.01;
 % prediction horizon
-N=2;               
+N=;               					% EDIT
 % lower input constraint [V]
 ul=0;                       
 % upper input constraint [V]
@@ -60,8 +60,8 @@ Bi=[zeros(ny,nu); B];                                   % Augmenting B by the in
 Ci=[zeros(ny,ny) C];                                    % Augmenting C by the integrator
 
 %% MPC Penalty
-Q=diag([5 1 100]);                                   % State penalty matrix
-R=2e3;                                               % Input penalty matrix
+Q=diag([]);                                  		% State penalty matrix EDIT
+R=;                                             	% Input penalty matrix EDIT
 
 %% Problem definition by MPT 3.0 (EDIT)
 model = 

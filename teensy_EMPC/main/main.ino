@@ -30,8 +30,8 @@
 #include <AeroShield.h>              // Include main library  
 #include <Sampling.h>                // Include sampling library
 
-//#include "ectrl_uno.h"               // Include header file for EMPC controller
-#include "ectrl_Teensy_N5.h"
+// EDIT - add your own EMPC solution
+#include "ectrl.h"
 
 #include <empcSequential.h>
 
